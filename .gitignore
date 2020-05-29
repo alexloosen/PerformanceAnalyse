@@ -1,0 +1,11 @@
+*.db3
+*.diag
+*.sln
+P2cpp/
+*.zip
+*.vs*
+*Debug*
+*Release*
+*.vcxproj*
+w_mklb/
+Linpack/
