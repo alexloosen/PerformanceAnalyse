@@ -9,12 +9,13 @@
 
 struct Charge {
 	float *x, *y, *z, *q; // Koordinaten und Stärke der Ladung
-	Charge()
+	// Pointer bei Anlage des Structs initialisieren (2048 = n, 2056 = lda (durch 8 teilbar))
+	Charge(int n, int lda)
 	{
-		x = (float*)_mm_malloc(sizeof(float) * 2048 * 2056, 32);
-		y = (float*)_mm_malloc(sizeof(float) * 2048 * 2056, 32);
-		z = (float*)_mm_malloc(sizeof(float) * 2048 * 2056, 32);
-		q = (float*)_mm_malloc(sizeof(float) * 2048 * 2056, 32);
+		x = (float*)_mm_malloc(sizeof(float) * n * lda, 32);
+		y = (float*)_mm_malloc(sizeof(float) * n * lda, 32);
+		z = (float*)_mm_malloc(sizeof(float) * n * lda, 32);
+		q = (float*)_mm_malloc(sizeof(float) * n * lda, 32);
 	}
 };
 
@@ -27,6 +28,8 @@ void CalculateElectricPotential(
 	phi = 0.0f;
 	int tile = 16;
 	for (int i = 0; i < m; i++) {
+		// Zugriff von chg[i].x auf chg.x[i] umgestellt, da man nun das offset eines jeden Pointers betrachtet und
+		// nicht länger das offset des Structs
 		const float dx = chg.x[i] - Rx;
 		const float dy = chg.y[i] - Ry;
 		const float dz = chg.z[i] - Rz;
@@ -35,8 +38,6 @@ void CalculateElectricPotential(
 
 }
 
-
-
 // ***********************************************************************
 int main(int argc, char* argv[])
 {
@@ -44,10 +45,10 @@ int main(int argc, char* argv[])
 	const size_t m = 1 << 11;
 
 	double starttime, elapsedtime;
-	int lda = m + (8 - m % 8);
-	//alignas(sizeof(Charge)) Charge chg = (Charge)_mm_malloc(sizeof(Charge) * m, sizeof(Charge));
-	alignas(32) float* potential = (float*)_mm_malloc(sizeof(float) * n * lda, 32);
-	Charge chg;
+	// Puffer berechnen, wenn n nicht durch 8 teilbar
+	int lda = m + (4 - m % 4);
+	alignas(16) float* potential = (float*)_mm_malloc(sizeof(float) * n * lda, 16);
+	Charge chg(n,lda);
 	//float* potential = (float*)malloc(sizeof(float) * n * n);
 
 	// Initializing array of charges
